@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hariharan & Jothika - Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Great+Vibes&family=Marcellus&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Marcellus', serif;
+      background: #4a1919;
+      color: #5c1818;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Mobile Container Frame */
+    .app-viewport {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      position: relative;
+      background: #fdf6ec;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      scroll-behavior: smooth;
+    }
+
+    /* Floating Petal Canvas (VFX) */
+    #petalCanvas {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      height: 100%;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Audio Player Floating Button */
+    .music-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #6f1622;
+      border: 2px solid #e7cba8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+
+    .music-btn:active {
+      transform: scale(0.92);
+    }
+
+    .eq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 18px;
+    }
+
+    .eq-bars span {
+      width: 3px;
+      background: #fff;
+      border-radius: 2px;
+      animation: eq 0.8s ease-in-out infinite alternate;
+    }
+    .eq-bars span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+    .eq-bars span:nth-child(2) { height: 16px; animation-delay: 0.3s; }
+    .eq-bars span:nth-child(3) { height: 10px; animation-delay: 0.5s; }
+    .music-btn.paused .eq-bars span {
+      animation: none;
+      height: 4px;
+    }
+
+    /* ----------------- COVER SCREEN ----------------- */
+    .cover-overlay {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      background: radial-gradient(circle, #b95d46 0%, #7d1c1c 100%);
+      z-index: 150;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    .cover-overlay.opened {
+      opacity: 0;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+    }
+
+    .envelope-card {
+      width: 82%;
+      background: #fdf5ea;
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #eccfb5;
+    }
+
+    .envelope-card::before, .envelope-card::after {
+      content: "";
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      background: radial-gradient(circle, rgba(188,40,65,0.85) 20%, transparent 70%);
+      filter: blur(4px);
+    }
+    .envelope-card::before { top: -20px; left: -20px; }
+    .envelope-card::after { bottom: -20px; right: -20px; }
+
+    .seal-icon {
+      width: 54px;
+      height: 54px;
+      background: #6a1622;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+    .seal-icon svg {
+      width: 26px;
+      height: 26px;
+      fill: #fff;
+    }
+
+    .cover-names {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.2rem;
+      color: #6a1622;
+      line-height: 1.3;
+    }
+    .cover-amp {
+      font-family: 'Marcellus', serif;
+      font-size: 1.2rem;
+      display: block;
+      color: #9f6534;
+      margin: 4px 0;
+    }
+    .cover-date {
+      font-size: 1rem;
+      margin: 18px 0 8px;
+      color: #4a151b;
+      letter-spacing: 0.5px;
+    }
+    .cover-sub {
+      font-size: 0.9rem;
+      color: #8c5d38;
+      margin-bottom: 24px;
+    }
+
+    .open-btn {
+      background: #6a1622;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      padding: 12px 38px;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(106, 22, 34, 0.45);
+      transition: all 0.25s ease;
+    }
+    .open-btn:hover {
+      background: #841d2c;
+      transform: translateY(-2px);
+    }
+
+    /* ----------------- INVITATION BODY ----------------- */
+    .hero-banner {
+      position: relative;
+      background: linear-gradient(180deg, #fcefe1 0%, #ebd2ba 100%);
+      padding: 50px 20px 20px;
+      text-align: center;
+      border-bottom: 2px solid #ecd8c2;
+    }
+    .hero-ganesha {
+      width: 50px;
+      opacity: 0.85;
+      margin-bottom: 10px;
+    }
+    .couple-title {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.6rem;
+      color: #6d1724;
+      line-height: 1.2;
+    }
+    .couple-title span {
+      display: block;
+      font-family: 'Marcellus', serif;
+      font-size: 1.2rem;
+      color: #926639;
+      margin: 4px 0;
+    }
+
+    .section-box {
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      letter-spacing: 2px;
+      color: #6a1622;
+      position: relative;
+      margin-bottom: 25px;
+    }
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 45px;
+      height: 2px;
+      background: #d4a373;
+      margin: 8px auto 0;
+    }
+
+    .parents-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+      color: #552125;
+    }
+    .parents-grid .divider {
+      border-right: 1px solid #dcc2a6;
+    }
+
+    .announce-tag {
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8c5d38;
+      margin-bottom: 6px;
+    }
+
+    .person-name {
+      font-size: 1.6rem;
+      color: #6d1724;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .person-role {
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: #966b44;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Event Cards */
+    .event-card {
+      background: rgba(255,255,255,0.65);
+      border: 1px solid #ecd8c2;
+      border-radius: 12px;
+      padding: 18px 14px;
+      margin: 18px 0;
+      backdrop-filter: blur(5px);
+    }
+    .event-title {
+      font-size: 0.95rem;
+      color: #6a1622;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .event-tamil {
+      font-size: 0.8rem;
+      color: #825c3a;
+      margin: 3px 0 10px;
+    }
+    .event-time {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #531c20;
+    }
+    .event-date-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .event-day-large {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #6a1622;
+    }
+
+    /* Countdown Section */
+    .countdown-wrap {
+      background: #f7ebe0;
+      padding: 20px 15px;
+      border-radius: 10px;
+      border: 1px dashed #d9b897;
+      margin: 20px 0;
+    }
+    .countdown-val {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #6a1622;
+      margin-top: 6px;
+    }
+
+    /* Map Card */
+    .map-container {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 15px;
+      border: 1px solid #d8bda2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .map-container iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .direction-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 10px 24px;
+      background: #6a1622;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(106, 22, 34, 0.3);
+      transition: background 0.2s;
+    }
+    .direction-btn:hover {
+      background: #841d2c;
+    }
+    .direction-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
+    .footer-quote {
+      font-size: 0.85rem;
+      font-style: italic;
+      color: #794d29;
+      padding: 25px 15px 50px;
+      text-align: center;
+    }
+
+    @keyframes eq {
+      0% { height: 4px; }
+      100% { height: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+  
+
+  <div class="app-viewport">
+    <!-- Petals VFX Canvas Layer -->
+    <canvas id="petalCanvas"></canvas>
+
+    
+
+    <!-- 1. OPENING COVER / ENVELOPE -->
+    <div class="cover-overlay" id="coverScreen">
+      <div class="envelope-card">
+        <div class="cover-seal">❤</div>
+        
+        <div class="cover-names">
+          Hariharan
+          <span class="cover-amp">&</span>
+          Jothika
+          
+        </div>
+        <div class="cover-date">November 11, 2026</div>
+        <div class="cover-sub">Cordially Invites</div>
+        <button class="open-btn" id="openBtn">Open</button>
+      </div>
+    </div>
+
+    <!-- 2. MAIN WEDDING INVITATION -->
+    <div class="hero-banner"> 
+      
+      <svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  viewBox="0 0 100 100" 
+  width="64" 
+  height="64" 
+  fill="none" 
+  stroke="#D97706" 
+  stroke-width="3" 
+  stroke-linecap="round" 
+  stroke-linejoin="round"
+  aria-label="Lord Ganesha Icon"
+  role="img"
+>
+  <!-- Crown / Triratna peak -->
+  <path d="M 45 10 L 50 4 L 55 10" />
+  <path d="M 40 18 C 45 12 55 12 60 18" />
+  <circle cx="50" cy="14" r="2" fill="#D97706" stroke="none" />
+
+  <!-- Forehead / Tilak -->
+  <path d="M 44 26 C 47 28 53 28 56 26" stroke-width="2" />
+  <path d="M 45 30 C 48 31 52 31 55 30" stroke-width="2" />
+  <circle cx="50" cy="22" r="1.5" fill="#EF4444" stroke="none" />
+
+  <!-- Left Ear -->
+  <path d="M 40 24 C 20 22 15 36 28 48 C 34 54 38 52 40 50" />
+
+  <!-- Right Ear -->
+  <path d="M 60 24 C 80 22 85 36 72 48 C 66 54 62 52 60 50" />
+
+  <!-- Trunk with curve to the left (Edampuri) and sweet/modak touch -->
+  <path d="M 46 36 C 46 54 36 62 44 76 C 50 86 64 84 66 74 C 68 64 56 62 56 68" />
+
+  <!-- Tusk detail -->
+  <line x1="43" y1="46" x2="38" y2="47" stroke-width="2.5" />
+  <line x1="57" y1="46" x2="61" y2="47" stroke-width="2.5" />
+
+  <!-- Small Modak on Trunk Tip -->
+  <circle cx="58" cy="65" r="2.5" fill="#F59E0B" stroke="none" />
+</svg>
+
+      <div class="couple-title">
+        Hariharan
+        <span>&</span>
+        Jothika
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="section-title">WEDDING INFO</div>
+      
+      <div class="parents-grid">
+        <div class="divider">
+          <strong>Mr. & Mrs.</strong><br>
+          Dharmaraja<br>
+          Muthukaladevi
+        </div>
+        <div>
+          <strong>Mr. & Mrs.</strong><br>
+          Ayyanar<br>
+          Pathma
+        </div>
+      </div>
+
+      <div class="announce-tag">WE JOYFULLY ANNOUNCE THE WEDDING OF OUR CHILDREN</div>
+      
+      <div style="margin: 20px 0;">
+        <div class="person-name">Hariharan</div>
+        <div class="person-role">Groom</div>
+        <div style="color: #926639; font-size: 1.2rem; margin: 4px 0;">&</div>
+        <div class="person-name">Jothika</div>
+        <div class="person-role">Bride</div>
+      </div>
+
+      <!-- Engagement Event -->
+      <div class="event-card">
+        <div class="event-title">ENGAGEMENT (நிச்சயதார்த்தம்) </div>
+        <div class="event-tamil">SHOWBHAGYA MAHAL (சௌபாக்யா மஹால்)</div>
+        <div class="event-time">AT 7:00 PM</div>
+        <div class="event-date-row">
+          <span>TUESDAY</span>
+          <span class="event-day-large">10</span>
+          <span>NOVEMBER<br>2026</span>
+        </div>
+      </div>
+
+      <!-- Wedding Rituals -->
+      <div class="event-card">
+        <div class="event-title">WEDDING RITUALS </div>
+        <div style="font-size: 0.85rem; line-height: 1.4; margin: 6px 0; color: #531c20;">
+          Arulmigu Shenbagavalli Amman Udannurai Poovananathaswamy Thirukoil
+        </div>
+        <div class="event-tamil">(அருள்தரும் ஸ்ரீ செண்பகவல்லி அம்பாள் உடனுறை அருள்மிகு ஸ்ரீ பூவனநாத சுவாமி திருக்கோயில்)</div>
+        <div class="event-time">AT 6:00 AM</div>
+        <div class="event-date-row">
+          <span>WEDNESDAY</span>
+          <span class="event-day-large">11</span>
+          <span>NOVEMBER<br>2026</span>
+        </div>
+      </div>
+
+      <!-- Celebration Event -->
+      <div class="event-card">
+        <div class="event-title">WEDDING CELEBRATION </div>
+        <div class="event-tamil">SHOWBHAGYA MAHAL (சௌபாக்யா மஹால்)</div>
+        <div class="event-time">AT 8:00 AM</div>
+        <div class="event-date-row">
+          <span>WEDNESDAY</span>
+          <span class="event-day-large">11</span>
+          <span>NOVEMBER<br>2026</span>
+        </div>
+      </div>
+
+      
+      <!-- Countdown -->
+      <div class="countdown-wrap">
+        <div style="font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; color: #8c5d38;">Countdown</div>
+        <div class="countdown-val" id="countdownTimer">Loading...</div>
+      </div>
+
+      <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save the Date Calendar</title>
+  <!-- Google Fonts for elegant invitation typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Container styling */
+    .calendar-card {
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 45px 35px 35px;
+      background-color: #faf7f2;
+      border: 1px solid #dfcfb9;
+      border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(180, 150, 120, 0.12);
+      font-family: 'Cormorant Garamond', serif;
+      text-align: center;
+      box-sizing: border-box;
+      color: #3b2827;
+    }
+
+    /* Month title */
+    .calendar-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #4a0e1c;
+      text-transform: uppercase;
+      margin: 0 0 30px 0;
+    }
+
+    /* 7-column Calendar Grid */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      row-gap: 24px;
+      column-gap: 8px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    /* Day of week headers */
+    .day-header {
+      font-size: 17px;
+      color: #5e4744;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    /* Standard date cell */
+    .date-cell {
+      font-size: 20px;
+      color: #433333;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* Heart highlighted date */
+    .heart-cell {
+      position: relative;
+      width: 40px;
+      height: 38px;
+    }
+
+    .heart-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 38px;
+      fill: #ff758f;
+    }
+
+    .heart-number {
+      position: relative;
+      z-index: 1;
+      color: #faf7f2;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+      line-height: 1;
+      margin-top: -3px; /* visual vertical alignment inside heart */
+    }
+
+    /* Add to calendar action link/button */
+    .add-to-calendar {
+      display: inline-block;
+      margin-top: 36px;
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #aa864b;
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      text-decoration-thickness: 1.5px;
+      transition: color 0.2s ease, opacity 0.2s ease;
+      cursor: pointer;
+    }
+
+    .add-to-calendar:hover {
+      color: #8c6c37;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calendar-card">
+    <div class="calendar-title">November 2026</div>
+
+    <div class="calendar-grid">
+      <!-- Weekday Headers -->
+      <span class="day-header">Mo</span>
+      <span class="day-header">Tu</span>
+      <span class="day-header">We</span>
+      <span class="day-header">Th</span>
+      <span class="day-header">Fr</span>
+      <span class="day-header">Sa</span>
+      <span class="day-header">Su</span>
+
+      <!-- Row 1: Nov 1 starts on Sunday (6 empty slots) -->
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span class="date-cell">1</span>
+
+      <!-- Row 2 -->
+      <span class="date-cell">2</span>
+      <span class="date-cell">3</span>
+      <span class="date-cell">4</span>
+      <span class="date-cell">5</span>
+      <span class="date-cell">6</span>
+      <span class="date-cell">7</span>
+      <span class="date-cell">8</span>
+
+      <!-- Row 3 (Highlighted 10 & 11) -->
+      <span class="date-cell">9</span>
+
+      <!-- 10 with Heart -->
+      <div class="date-cell heart-cell">
+        <svg class="heart-icon" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="heart-number">10</span>
+      </div>
+
+      <!-- 11 with Heart -->
+      <div class="date-cell heart-cell">
+        <svg class="heart-icon" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="heart-number">11</span>
+      </div>
+
+      <span class="date-cell">12</span>
+      <span class="date-cell">13</span>
+      <span class="date-cell">14</span>
+      <span class="date-cell">15</span>
+
+      <!-- Row 4 -->
+      <span class="date-cell">16</span>
+      <span class="date-cell">17</span>
+      <span class="date-cell">18</span>
+      <span class="date-cell">19</span>
+      <span class="date-cell">20</span>
+      <span class="date-cell">21</span>
+      <span class="date-cell">22</span>
+
+      <!-- Row 5 -->
+      <span class="date-cell">23</span>
+      <span class="date-cell">24</span>
+      <span class="date-cell">25</span>
+      <span class="date-cell">26</span>
+      <span class="date-cell">27</span>
+      <span class="date-cell">28</span>
+      <span class="date-cell">29</span>
+
+      <!-- Row 6 -->
+      <span class="date-cell">30</span>
+    </div>
+
+    <!-- Calendar Action Link -->
+         <a class="calendar-btn-link" onclick="addToGoogleCalendar()">Add to Calendar</a>
+      </div>
+
+</body>
+</html>
+
+
+      <!-- Celebration Venue & Directions -->
+      <div style="margin-top: 30px;">
+        <div class="section-title">CELEBRATION VENUE</div>
+        <div style="font-size: 1.1rem; font-weight: 600; color: #6a1622;">SOWBHAGYA MAHAL</div>
+        <div style="font-size: 0.85rem; color: #7d4e28; margin-top: 4px;">Venkatesh Nagar, Via Kathiresan Kovil Road, Kovilpatti</div>
+
+        <!-- Embedded Interactive Google Map -->
+        <div class="map-container">
+          <iframe 
+            src="https://maps.google.com/maps?q=Sowbhagya+Mahal+Kovilpatti&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            loading="lazy">
+          </iframe>
+        </div>
+
+        <!-- Google Maps Direct Direction Link -->
+        <a 
+          href="https://www.google.com/maps/dir/?api=1&destination=Sowbhagya+Mahal+%26+Ac+Marriage+Hall+Kovilpatti" 
+          target="_blank" 
+          rel="noopener"
+          class="direction-btn">
+          <svg viewBox="0 0 24 24"><path d="M22.43 10.59l-9.01-9.01c-.75-.75-2.07-.75-2.83 0l-9 9c-.78.78-.78 2.04 0 2.82l9 9c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l9.01-9.01c.78-.78.78-2.04-.01-2.8zM13.5 14.5v-3h-4v3H8v-4c0-.55.45-1 1-1h4.5V6.5L17.5 10.5l-4 4z"/></svg>
+          Get directions
+        </a>
+      </div>
+
+      <div class="footer-quote">
+        "Your presence would be the greatest gift we could receive!"
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* 1. Falling Petals VFX (HTML5 Canvas Engine) */
+    const canvas = document.getElementById('petalCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resizeCanvas() {
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const petals = [];
+    const petalColors = ['#e63946', '#ff758f', '#ffb3c1', '#c1121f', '#d90429'];
+
+    class Petal {
+      constructor() {
+        this.reset(true);
+      }
+      reset(randomY = false) {
+        this.x = Math.random() * width;
+        this.y = randomY ? Math.random() * height : -20;
+        this.size = Math.random() * 8 + 6;
+        this.speedX = Math.random() * 1.5 - 0.75;
+        this.speedY = Math.random() * 1.8 + 1.2;
+        this.angle = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.04;
+        this.color = petalColors[Math.floor(Math.random() * petalColors.length)];
+        this.opacity = Math.random() * 0.5 + 0.4;
+      }
+      update() {
+        this.x += this.speedX + Math.sin(this.angle) * 0.5;
+        this.y += this.speedY;
+        this.angle += this.spin;
+        if (this.y > height + 20 || this.x < -30 || this.x > width + 30) {
+          this.reset(false);
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-this.size / 2, -this.size / 2, -this.size, this.size / 3, 0, this.size);
+        ctx.bezierCurveTo(this.size, this.size / 3, this.size / 2, -this.size / 2, 0, 0);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 35; i++) {
+      petals.push(new Petal());
+    }
+
+    function animatePetals() {
+      ctx.clearRect(0, 0, width, height);
+      petals.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animatePetals);
+    }
+    animatePetals();
+
+// Add to Google Calendar direct link generator
+    function addToGoogleCalendar() {
+      const gcalUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+        "&text=" + encodeURIComponent("Wedding of Hariharan & Jothika") +
+        "&dates=" + "20261111T003000Z/20261111T063000Z" +
+        "&details=" + encodeURIComponent("We joyfully invite you to celebrate the wedding of Hariharan & Jothika.") +
+        "&location=" + encodeURIComponent("Sowbhagya Mahal, Kovilpatti");
+      window.open(gcalUrl, "_blank");
+    }
+
+    /* 3. Live Countdown Timer */
+    const targetDate = new Date('November 11, 2026 06:00:00').getTime();
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance < 0) {
+        document.getElementById('countdownTimer').innerHTML = "Celebrated!";
+        return;
+      }
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      document.getElementById('countdownTimer').innerHTML = 
+        `${days} days ${hours} hours ${minutes} min ${seconds} sec`;
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+    
+    /* 2. Open Transition & Audio Trigger */
+    const coverScreen = document.getElementById('coverScreen');
+    const openBtn = document.getElementById('openBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
+
+    openBtn.addEventListener('click', () => {
+      coverScreen.classList.add('opened');
+      bgMusic.play().catch(() => {});
+    });
+
+    musicToggle.addEventListener('click', () => {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.classList.remove('paused');
+      } else {
+        bgMusic.pause();
+        musicToggle.classList.add('paused');
+      }
+    });
+
+    
+
+    
+
+  </script>
+</body>
+</html>
